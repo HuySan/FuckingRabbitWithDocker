@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+#  nginx:
+#    image: "nginx:stable-alpine"
+#    ports:
+#      - "8000:80"
+#    volumes:
+#      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+#      - ./core-test:/var/www/core-test
+#    depends_on:
+#      - mysql
+
+  core-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: core-test
+    restart: unless-stopped
+    volumes:
+      - ./core-test:/var/www/core-test
+    depends_on:
+      - mysql
+    ports:
+      - "8080:80"
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysqlTest
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: laravel_database
+      MYSQL_USER: root
+    ports:
+      - "3334:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitMqTest
+    restart: unless-stopped
+    tty: true
+    env_file:
+      - ./core-test/.env
+    ports:
+      - "5672:5672" # порт для передачи сообщений
+      - "15672:15672" # порт для веб мониторинга кролика (RabbitMQ Management Plugin)
+
+volumes:
+  mysql_data:
+
+networks:
+  my-test-network:
+    driver: bridge
